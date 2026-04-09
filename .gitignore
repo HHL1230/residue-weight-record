@@ -1,0 +1,17 @@
+# Excel Temporary Files
+~$*.xlsx
+~$*.xlsm
+*.tmp
+
+# Office Cache
+[Cc]ache/
+
+# VBE Exports / User Settings
+*.vba.frx
+*.vba.log
+*.vba.cls
+*.vba.bas
+
+# OS Files
+Thumbs.db
+Desktop.ini
