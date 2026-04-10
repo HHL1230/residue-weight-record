@@ -1,5 +1,6 @@
 ' ==========================================================
 ' 功能：背景定時「強制」同步 (解決同一台電腦多帳戶切換的閃退 Bug)
+' 新增：智慧防干擾，操作其他活頁簿時自動暫停同步
 ' 位置：請將此程式碼放在「一般模組 (Module)」中
 ' ==========================================================
 
@@ -26,17 +27,21 @@ End Sub
 Sub CheckForUpdates()
     On Error GoTo ErrHandler
     
-    ' 【重要防護 1】：如果目前這個 Excel 視窗處於最小化 (或者被切換到背景)，直接跳過本次存檔，避免衝突
+    ' 【重要防護 1】：如果目前這個 Excel 視窗處於最小化，直接跳過本次存檔，避免衝突
     If Application.WindowState = xlMinimized Then GoTo ErrHandler
+    
+    ' 【重要防護 2 - 新增防干擾】：檢查目前活躍的活頁簿是不是自己
+    ' 如果您正在編輯「其他的」Excel 檔案，就暫時不要執行存檔，以免搶奪游標與視窗
+    If Not ActiveWorkbook Is Nothing Then
+        If ActiveWorkbook.Name <> ThisWorkbook.Name Then GoTo ErrHandler
+    End If
     
     ' 確保檔案在共用模式下才執行
     If ThisWorkbook.MultiUserEditing Then
-        
-        ' 【重要防護 2】：拿掉 ScreenUpdating = False，避免切換使用者時畫面崩潰
         Application.EnableEvents = False
         
         ' 強制存檔以拉取遠端最新數據
-        ThisWorkbook.Save
+        ThisWorkbook.Save 
         
         ' 恢復事件
         Application.EnableEvents = True
