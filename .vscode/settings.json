@@ -1,0 +1,9 @@
+{
+    "[vba]": {
+        "files.encoding": "big5"
+    },
+    "files.associations": {
+        "*.cls": "vba",
+        "*.bas": "vba"
+    }
+}
