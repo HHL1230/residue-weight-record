@@ -5,6 +5,7 @@
 ' ==========================================================
 
 Public RunTime As Double
+Public LastCheckTime As Date
 
 ' 啟動定時器 (由 ThisWorkbook 呼叫)
 Sub StartSyncTimer()
@@ -23,34 +24,37 @@ Sub StopSyncTimer()
     Application.OnTime RunTime, "CheckForUpdates", , False
 End Sub
 
-' 強制執行同步
+' 主邏輯：檢查檔案更新時間
 Sub CheckForUpdates()
-    On Error GoTo ErrHandler
+    Dim currentFileTime As Date
     
-    ' 【重要防護 1】：如果目前這個 Excel 視窗處於最小化，直接跳過本次存檔，避免衝突
-    If Application.WindowState = xlMinimized Then GoTo ErrHandler
-    
-    ' 【重要防護 2 - 新增防干擾】：檢查目前活躍的活頁簿是不是自己
-    ' 如果您正在編輯「其他的」Excel 檔案，就暫時不要執行存檔，以免搶奪游標與視窗
-    If Not ActiveWorkbook Is Nothing Then
-        If ActiveWorkbook.Name <> ThisWorkbook.Name Then GoTo ErrHandler
+    ' 1. 【防干擾核心】：如果使用者正在操作其他活頁簿，跳過這次同步
+    ' 避免在處理其他報表時，被這個背景連線動作干擾輸入
+    If Not Application.ActiveWorkbook Is ThisWorkbook Then
+        GoTo Reschedule
     End If
     
-    ' 確保檔案在共用模式下才執行
-    If ThisWorkbook.MultiUserEditing Then
+    ' 2. 獲取遠端檔案 (共用活頁簿) 的最後修改時間
+    On Error Resume Next
+    currentFileTime = FileDateTime(ThisWorkbook.FullName)
+    
+    ' 3. 如果檔案時間大於上次檢查時間，代表有新數據
+    ' 使用強制方法連線：這裡採用 Save 觸發 Excel 的背景合併機制
+    If currentFileTime > LastCheckTime Then
+        ' 暫時關閉事件與更新，減少閃爍
         Application.EnableEvents = False
         
-        ' 強制存檔以拉取遠端最新數據
-        ThisWorkbook.Save 
+        ' 【重要】：這裡使用 Save 但不顯示彈窗。
+        ' 在「共用活頁簿」模式下，Save 會自動抓取別人的更新並合併進來。
+        ThisWorkbook.Save
         
-        ' 恢復事件
-        Application.EnableEvents = True
-        
-        ' 在狀態列給予微小提示
+        ' 更新記錄點
+        LastCheckTime = currentFileTime
         Application.StatusBar = "背景同步完成 (" & Format(Now, "HH:mm:ss") & ")"
+        Application.EnableEvents = True
     End If
 
-ErrHandler:
-    ' 確保不論成功或失敗，都會啟動下一次 10 秒的倒數
+Reschedule:
+    ' 繼續循環
     ScheduleNextCheck
 End Sub

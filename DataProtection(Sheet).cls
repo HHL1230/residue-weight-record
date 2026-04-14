@@ -7,7 +7,7 @@
 Private prevSelectedCell As Range
 Private prevHasData As Boolean
 
-' --- 事件 A：選取儲存格時 (記憶舊資料狀態，取代原生鎖定檢查) ---
+' --- 事件 A：選取儲格時 (記憶舊資料狀態，取代原生鎖定檢查) ---
 Private Sub Worksheet_SelectionChange(ByVal Target As Range)
     Dim watchRange As Range
     Set watchRange = Range("C3:E34, M3:O34")
