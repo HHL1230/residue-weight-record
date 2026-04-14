@@ -1,9 +1,14 @@
 {
-    "[vba]": {
+    "files.encoding": "utf-8",
+    "files.associations": {
+        "*.cls": "vb",
+        "*.bas": "vb",
+        "*.ps1": "powershell"
+    },
+    "[vb]": {
         "files.encoding": "big5"
     },
-    "files.associations": {
-        "*.cls": "vba",
-        "*.bas": "vba"
+    "[powershell]": {
+        "files.encoding": "utf8bom"
     }
 }
