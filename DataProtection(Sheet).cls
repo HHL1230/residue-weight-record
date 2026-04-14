@@ -7,7 +7,7 @@
 Private prevSelectedCell As Range
 Private prevHasData As Boolean
 
-' --- 事件 A：選取儲格時 (記憶舊資料狀態，取代原生鎖定檢查) ---
+' --- 事件 A：選取儲存格時 (記憶舊資料狀態，取代原生鎖定檢查) ---
 Private Sub Worksheet_SelectionChange(ByVal Target As Range)
     Dim watchRange As Range
     Set watchRange = Range("C3:E34, M3:O34")
@@ -57,17 +57,22 @@ Private Sub Worksheet_Change(ByVal Target As Range)
     
     ' 【步驟 2：執行覆寫確認與撤銷 (虛擬鎖核心)】
     If isOverwrite Then
-        ' 第一關確認
+        ' 第一關確認 (基本詢問)
         If MsgBox("確認修改數據 ?", vbYesNo + vbQuestion, "數據修改確認 (1/2)") = vbNo Then
             GoTo CancelEdit
         End If
         
-        ' 第二關確認 (防止誤觸加嚴)
-        If MsgBox("現有數據是否已備份，並再次確認要修改 ?", vbYesNo + vbExclamation, "最終覆寫確認 (2/2)") = vbNo Then
+        ' 第二關確認 (強制輸入驗證碼 FCM)
+        Dim userInput As String
+        userInput = InputBox("現有數據是否已備份?" & vbCrLf & "確認要修改請輸入大寫 ""FCM""。", "最終覆寫確認 (2/2)")
+        
+        If userInput <> "FCM" Then
+            ' 如果輸入錯誤或按取消
+            MsgBox "驗證失敗或已取消，數據未修改。", vbCritical, "操作撤銷"
             GoTo CancelEdit
         End If
         
-        ' 只有兩關都過才繼續執行存檔
+        ' 通過兩關驗證
     End If
     
     ' 【步驟 3：合法輸入，執行存檔與同步標記】
@@ -91,7 +96,7 @@ CleanUp:
     Exit Sub
 
 CancelEdit:
-    ' 使用者選「否」：瞬間撤銷，恢復舊資料
+    ' 使用者選「否」或輸入錯誤：瞬間撤銷，恢復舊資料
     On Error Resume Next
     Application.EnableEvents = False
     Application.Undo
